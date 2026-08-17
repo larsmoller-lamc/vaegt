@@ -1,68 +1,77 @@
 # Vægt
 
-Personlig vægt- og aktivitets-tracker med Firebase-backend, låst til din Google-konto.
+Personlig vægt- og aktivitets-tracker med Firebase-backend, låst til én Google-konto.
+
+## Filstruktur
+
+```
+vaegt/
+├── index.html                    ← markup (kan trygt overskrives)
+├── assets/
+│   ├── css/styles.css            ← styling (kan trygt overskrives)
+│   └── js/
+│       ├── app.js                ← al app-logik (kan trygt overskrives)
+│       └── config.js             ← ⚠️ DIN Firebase-config (skal IKKE overskrives)
+├── firebase/
+│   └── firestore.rules           ← ⚠️ security rules (deploy separat, skal IKKE overskrives)
+└── README.md
+```
+
+**Ved fremtidige opdateringer** overskrives kun `index.html`, `styles.css` og `app.js`. Filerne `config.js` og `firestore.rules` er dine — de rører jeg ikke.
+
+## Score-logik
+
+Max score pr. dag = **10 point**:
+- 9 aktivitets-checkboxes (Løb, Fitness, Svømning, Tennis, Gåtur + 4x mad-regler)
+- +1 point hvis dagens vægt **≤ dagens målvægt**
+
+Zoner:
+- **≥5** → vægttab-zone (grøn)
+- **4** → hold vægten (gul)
+- **≤3** → risiko for at tage på (rød)
+
+## Målkurve
+
+Start 93,2 kg d. 17-08-2026, −0,07 kg/dag, floor ved 76,0 kg.
+Rammer 76 kg omkring 20. april 2027 — derefter fladt.
 
 ## Setup — 5 minutter
 
-### 1. Opret Firebase-projekt
+### 1. Firebase-projekt
 
-1. Gå til [console.firebase.google.com](https://console.firebase.google.com/)
-2. **Add project** → navn: `vaegt` (eller genbrug dit eksisterende projekt fra DJ-appen)
-3. Slå Google Analytics fra — ikke nødvendigt
+1. [console.firebase.google.com](https://console.firebase.google.com/) → **Add project** → navn: `vaegt`
+2. Analytics kan slås fra
 
-### 2. Aktivér Authentication
+### 2. Auth
 
-1. I sidepanelet: **Build → Authentication → Get started**
-2. **Sign-in method** → **Google** → aktivér → vælg din projekt-support-email → **Save**
+**Build → Authentication → Get started → Sign-in method → Google** → aktivér.
 
-### 3. Aktivér Firestore
+### 3. Firestore
 
-1. **Build → Firestore Database → Create database**
-2. Vælg location: **eur3 (europe-west)**
-3. Start i **production mode**
+**Build → Firestore Database → Create database** → location `eur3` → production mode.
 
-### 4. Sæt Firestore security rules
+### 4. Deploy security rules
 
-Gå til **Firestore → Rules** og indsæt:
+Åbn `firebase/firestore.rules`, kopiér indholdet, indsæt i **Firestore → Rules → Publish**.
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null
-                        && request.auth.uid == userId
-                        && request.auth.token.email == "larsmollerchristensen@gmail.com";
-    }
-  }
-}
+Eller via Firebase CLI:
+```bash
+firebase deploy --only firestore:rules
 ```
 
-**Publish**.
+### 5. Registrér web-app
 
-### 5. Registrér din web-app
+**Project settings → Your apps → </>** → nickname `vaegt-web` → **Register**.
 
-1. **Project settings** (tandhjul) → **Your apps** → **</>** (web-ikon)
-2. Nickname: `vaegt-web` → **Register app**
-3. Kopiér `firebaseConfig`-objektet
+Kopiér `firebaseConfig`-objektet.
 
-### 6. Indsæt config i `index.html`
+### 6. Sæt config
 
-Find denne blok i `index.html` (linje ~700):
+Åbn `assets/js/config.js` og udskift værdierne. Ret evt. også `ALLOWED_EMAIL` hvis du bruger en anden konto (husk også at ændre den i `firestore.rules`).
 
-```javascript
-const firebaseConfig = {
-  apiKey: "REPLACE_WITH_YOUR_API_KEY",
-  ...
-};
-```
+### 7. Auth-domæne
 
-Udskift med værdierne fra Firebase.
-
-### 7. Tilføj din GitHub Pages-URL i Firebase Auth
-
-1. Firebase Console → **Authentication → Settings → Authorized domains**
-2. **Add domain** → `larsmollerchristensen.github.io` (eller hvad du bruger)
+**Authentication → Settings → Authorized domains** → tilføj `larsmollerchristensen.github.io`.
 
 ### 8. Deploy til GitHub Pages
 
@@ -76,35 +85,22 @@ git push -u origin main
 
 Enable Pages i repo-settings.
 
----
-
-## Datamodel
-
-Firestore-struktur:
+## Datamodel (Firestore)
 
 ```
 users/
   {uid}/
     entries/
-      2026-08-17: { weight: 93.2, activities: { run: true, ... }, score: 6 }
-      2026-08-18: { ... }
+      2026-08-17: {
+        weight: 93.2,
+        activities: { run: true, fit: false, ... },
+        score: 6,
+        updatedAt: "2026-08-17T09:12:00Z"
+      }
 ```
 
-Én dokument pr. dag, dokument-ID er datoen (ISO-format).
+Én dokument pr. dag, dokument-ID = ISO-dato.
 
-## Logik
+## Vægt-input
 
-- **Målkurve**: Start 93.2 kg (17-08-2026), −0.07 kg/dag, floor ved 76 kg
-- **Score-zoner**:
-  - ≥4 → vægttab-zone (grøn)
-  - 3 → hold vægten (gul)
-  - ≤2 → tag på-risiko (rød)
-- **7-dages snit**: rullende gennemsnit af vægt-målinger
-
-## Withings-integration (senere)
-
-Withings har et REST API. Manuel indtastning nu, automatisk sync kan bygges senere via:
-- Withings Developer Portal → OAuth2-app
-- En lille Cloud Function der puller vægt-data dagligt og skriver til Firestore
-
-Sig til når du vil have det bygget på.
+Feltet accepterer både komma og punktum. Ved blur normaliseres visning til dansk format (`93,2`). Værdien lagres altid som float i Firestore.
