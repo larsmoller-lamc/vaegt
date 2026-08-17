@@ -26,9 +26,11 @@ Max score pr. dag = **10 point**:
 - +1 point hvis dagens vægt **≤ dagens målvægt**
 
 Zoner:
-- **≥5** → vægttab-zone (grøn)
-- **4** → hold vægten (gul)
-- **≤3** → risiko for at tage på (rød)
+- **≥4** → vægttab-zone (grøn)
+- **3** → hold vægten (gul)
+- **≤2** → risiko for at tage på (rød)
+
+Vægt-pointet er en bonus ovenpå — så en dag med 3 aktiviteter *og* vægt under mål lander i vægttab-zonen.
 
 ## Målkurve
 
