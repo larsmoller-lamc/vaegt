@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F3D2E">
+<title>Vægt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Grønlig palette — moss/sage/forest */
+  --moss-deep: #0F3D2E;
+  --moss: #1F5C43;
+  --sage: #4A7C59;
+  --sage-light: #8FB39A;
+  --mint-bg: #F0F5F1;
+  --cream: #FAF8F3;
+  --paper: #FFFFFF;
+  --ink: #142822;
+  --ink-soft: #4A5D55;
+  --ink-mute: #8A9A93;
+  --line: #D8E2DC;
+  --line-soft: #E8EFEA;
+
+  /* Score-zone farver */
+  --zone-loss: #2E7D5B;    /* ≥4 grøn — vægttab */
+  --zone-loss-bg: #DFEEE5;
+  --zone-hold: #C89B2E;    /* 3 gul — hold */
+  --zone-hold-bg: #F7EED4;
+  --zone-gain: #B84A3E;    /* ≤2 rød — tag på */
+  --zone-gain-bg: #F4DDD9;
+
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-sm: 8px;
+  --shadow-sm: 0 1px 2px rgba(15, 61, 46, 0.04);
+  --shadow-md: 0 4px 16px rgba(15, 61, 46, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 61, 46, 0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--mint-bg);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+body { font-size: 15px; line-height: 1.5; }
+
+/* ============ LOGIN ============ */
+#loginScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--moss-deep) 0%, var(--moss) 50%, var(--sage) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+#loginScreen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(143, 179, 154, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(74, 124, 89, 0.2) 0%, transparent 50%);
+}
+
+.login-card {
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.login-mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--sage);
+  margin-bottom: 24px;
+  padding: 8px 14px;
+  background: var(--mint-bg);
+  border-radius: 100px;
+}
+
+.login-mark::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sage);
+  align-self: center;
+}
+
+.login-card h1 {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--moss-deep);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+  line-height: 1;
+}
+
+.login-card p {
+  color: var(--ink-soft);
+  margin-bottom: 32px;
+  font-size: 15px;
+}
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--moss-deep);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.google-btn:hover { background: var(--moss); }
+.google-btn:active { transform: scale(0.98); }
+
+.google-btn svg { width: 20px; height: 20px; }
+
+.login-error {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--zone-gain-bg);
+  color: var(--zone-gain);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  display: none;
+}
+
+/* ============ APP ============ */
+#app { display: none; padding-bottom: 100px; }
+
+.topbar {
+  background: var(--moss-deep);
+  color: white;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar h1 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.topbar h1::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sage-light);
+  align-self: center;
+}
+
+.topbar-actions { display: flex; gap: 8px; }
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.icon-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* ============ CONTAINER ============ */
+.container { max-width: 720px; margin: 0 auto; padding: 20px 16px; }
+
+/* ============ HERO — dagens status ============ */
+.hero {
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.hero-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sage);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hero-day {
+  font-size: 13px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+}
+
+.date-nav { display: flex; gap: 4px; }
+.date-nav button {
+  background: var(--mint-bg);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--moss);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+.date-nav button:hover { background: var(--line-soft); }
+.date-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.weight-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.weight-input-wrap {
+  background: var(--mint-bg);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  position: relative;
+}
+
+.weight-input-wrap label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.weight-input-wrap input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--moss-deep);
+  letter-spacing: -0.02em;
+  padding: 0;
+  outline: none;
+}
+
+.weight-input-wrap input::placeholder { color: var(--sage-light); }
+
+.weight-target {
+  background: var(--cream);
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.weight-target label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.weight-target .value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--sage);
+  letter-spacing: -0.02em;
+}
+
+.weight-target .diff {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  margin-top: 2px;
+}
+
+/* ============ SCORE ============ */
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius);
+  transition: background 0.3s;
+}
+
+.score-display.zone-loss { background: var(--zone-loss-bg); }
+.score-display.zone-hold { background: var(--zone-hold-bg); }
+.score-display.zone-gain { background: var(--zone-gain-bg); }
+.score-display.zone-none { background: var(--mint-bg); }
+
+.score-number {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.zone-loss .score-number { color: var(--zone-loss); }
+.zone-hold .score-number { color: var(--zone-hold); }
+.zone-gain .score-number { color: var(--zone-gain); }
+.zone-none .score-number { color: var(--ink-mute); }
+
+.score-meta { flex: 1; }
+.score-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.zone-loss .score-label { color: var(--zone-loss); }
+.zone-hold .score-label { color: var(--zone-hold); }
+.zone-gain .score-label { color: var(--zone-gain); }
+.zone-none .score-label { color: var(--ink-mute); }
+
+.score-verdict {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.score-max {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-mute);
+  align-self: flex-end;
+  margin-bottom: 6px;
+}
+
+/* ============ AKTIVITETER ============ */
+.activities-card {
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-mute);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.section-hint {
+  font-size: 12px;
+  color: var(--ink-mute);
+  font-weight: 600;
+}
+
+.activity-group {
+  margin-bottom: 20px;
+}
+.activity-group:last-child { margin-bottom: 0; }
+
+.group-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--sage);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line-soft);
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.activity-btn {
+  background: var(--mint-bg);
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+}
+
+.activity-btn:hover { background: var(--line-soft); }
+
+.activity-btn.checked {
+  background: var(--moss-deep);
+  border-color: var(--moss-deep);
+  color: white;
+}
+
+.activity-btn.checked .activity-name { color: white; }
+.activity-btn.checked .activity-detail { color: var(--sage-light); }
+
+.activity-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2px solid var(--sage-light);
+  background: var(--paper);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.activity-btn.checked .activity-check {
+  background: var(--sage-light);
+  border-color: var(--sage-light);
+}
+
+.activity-check svg {
+  width: 14px;
+  height: 14px;
+  color: var(--moss-deep);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.activity-btn.checked .activity-check svg { opacity: 1; }
+
+.activity-text { flex: 1; min-width: 0; }
+.activity-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.activity-detail {
+  font-size: 11px;
+  color: var(--ink-mute);
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+/* ============ CHART ============ */
+.chart-card {
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--mint-bg);
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.chart-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chart-tab.active {
+  background: var(--paper);
+  color: var(--moss-deep);
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-container {
+  position: relative;
+  height: 240px;
+  width: 100%;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-line {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.legend-dash {
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed;
+}
+
+/* ============ STATS ============ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 14px 12px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--moss-deep);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stat-value.pos { color: var(--zone-loss); }
+.stat-value.neg { color: var(--zone-gain); }
+
+.stat-unit {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  margin-top: 1px;
+}
+
+/* ============ MENU / MODAL ============ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 61, 46, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+}
+
+.modal-backdrop.open { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.modal {
+  background: var(--paper);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 24px 24px 0 0;
+  padding: 24px 20px 32px;
+  animation: slideUp 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--moss-deep);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.modal-sub {
+  font-size: 13px;
+  color: var(--ink-mute);
+  margin-bottom: 20px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-family: inherit;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.menu-item:hover { background: var(--mint-bg); }
+.menu-item svg { width: 18px; height: 18px; color: var(--sage); }
+.menu-item.danger { color: var(--zone-gain); }
+.menu-item.danger svg { color: var(--zone-gain); }
+
+/* ============ TOAST ============ */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--moss-deep);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.toast svg { width: 16px; height: 16px; }
+
+/* ============ LOADING ============ */
+.loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mint-bg);
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--line);
+  border-top-color: var(--sage);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ EMPTY STATE ============ */
+.saving-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--sage);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.saving-badge.visible { opacity: 1; }
+.saving-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sage);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ============ MOBILE ============ */
+@media (max-width: 480px) {
+  .container { padding: 16px 12px; }
+  .hero { padding: 20px 16px; }
+  .weight-input-wrap input, .weight-target .value { font-size: 24px; }
+  .score-number { font-size: 48px; }
+  .stat-value { font-size: 18px; }
+  .activity-grid { grid-template-columns: 1fr; }
+}
+
+/* ============ NUMBER INPUT ARROWS ============ */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] { -moz-appearance: textfield; }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-mark">VÆGT</div>
+    <h1>Log på</h1>
+    <p>Personlig vægt-tracking med daglig score</p>
+    <button id="googleSignIn" class="google-btn">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Fortsæt med Google
+    </button>
+    <div id="loginError" class="login-error"></div>
+  </div>
+</div>
+
+<!-- ============ LOADING ============ -->
+<div id="loadingScreen" class="loading" style="display:none">
+  <div class="spinner"></div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="topbar">
+    <h1>Vægt</h1>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="menuBtn" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="saving-badge" id="savingBadge">Gemmer</div>
+      <div class="hero-header">
+        <div>
+          <div class="hero-date" id="heroDate"></div>
+          <div class="hero-day" id="heroDay"></div>
+        </div>
+        <div class="date-nav">
+          <button id="prevDay" aria-label="Forrige dag">‹</button>
+          <button id="todayBtn" aria-label="I dag">•</button>
+          <button id="nextDay" aria-label="Næste dag">›</button>
+        </div>
+      </div>
+
+      <div class="weight-block">
+        <div class="weight-input-wrap">
+          <label>Vægt</label>
+          <input type="number" id="weightInput" step="0.1" placeholder="—" inputmode="decimal">
+        </div>
+        <div class="weight-target">
+          <label>Mål i dag</label>
+          <div class="value" id="targetValue">—</div>
+          <div class="diff" id="targetDiff">&nbsp;</div>
+        </div>
+      </div>
+
+      <div class="score-display zone-none" id="scoreDisplay">
+        <div class="score-number" id="scoreNumber">0</div>
+        <div class="score-meta">
+          <div class="score-label" id="scoreLabel">Score i dag</div>
+          <div class="score-verdict" id="scoreVerdict">Ingen aktiviteter</div>
+        </div>
+        <div class="score-max">/ 9</div>
+      </div>
+    </section>
+
+    <!-- AKTIVITETER -->
+    <section class="activities-card">
+      <div class="section-header">
+        <div class="section-title">Aktiviteter</div>
+        <div class="section-hint">Tryk for at markere</div>
+      </div>
+
+      <div class="activity-group">
+        <div class="group-label">Motion</div>
+        <div class="activity-grid" id="motionGrid"></div>
+      </div>
+
+      <div class="activity-group">
+        <div class="group-label">Mad</div>
+        <div class="activity-grid" id="foodGrid"></div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">7 dg. snit</div>
+        <div class="stat-value" id="stat7">—</div>
+        <div class="stat-unit">kg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Streak</div>
+        <div class="stat-value" id="statStreak">—</div>
+        <div class="stat-unit">dg. ≥4</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Afv. fra mål</div>
+        <div class="stat-value" id="statDiff">—</div>
+        <div class="stat-unit">kg</div>
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <section class="chart-card">
+      <div class="section-header">
+        <div class="section-title">Udvikling</div>
+      </div>
+      <div class="chart-tabs">
+        <button class="chart-tab active" data-range="30">30 dage</button>
+        <button class="chart-tab" data-range="90">90 dage</button>
+        <button class="chart-tab" data-range="all">Alt</button>
+      </div>
+      <div class="chart-container">
+        <canvas id="weightChart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background: var(--moss-deep)"></div>Faktisk</div>
+        <div class="legend-item"><div class="legend-line" style="background: var(--sage)"></div>7-dg. snit</div>
+        <div class="legend-item"><div class="legend-dash" style="border-top-color: var(--ink-mute)"></div>Mål</div>
+      </div>
+    </section>
+
+    <!-- SCORE CHART -->
+    <section class="chart-card">
+      <div class="section-header">
+        <div class="section-title">Daglig score</div>
+      </div>
+      <div class="chart-container" style="height: 160px">
+        <canvas id="scoreChart"></canvas>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-backdrop" id="menuModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="userName">—</div>
+    <div class="modal-sub" id="userEmail">—</div>
+
+    <button class="menu-item" id="exportBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Eksportér som CSV
+    </button>
+
+    <button class="menu-item" id="signOutBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Log ud
+    </button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+  <span id="toastText">Gemt</span>
+</div>
+
+<!-- ============ FIREBASE + LOGIC ============ -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+import {
+  getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+// ============ KONFIGURATION ============
+// UDSKIFT MED DIN EGEN FIREBASE-KONFIG
+const firebaseConfig = {
+  apiKey: "REPLACE_WITH_YOUR_API_KEY",
+  authDomain: "REPLACE_WITH_YOUR_PROJECT.firebaseapp.com",
+  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
+  storageBucket: "REPLACE_WITH_YOUR_PROJECT.appspot.com",
+  messagingSenderId: "REPLACE_WITH_SENDER_ID",
+  appId: "REPLACE_WITH_APP_ID"
+};
+
+const ALLOWED_EMAIL = "larsmollerchristensen@gmail.com";
+
+// ============ MÅLKURVE ============
+// Start: 17-08-2026 @ 93.2 kg → -0.07 kg/dag → floor ved 76 kg
+const START_DATE = "2026-08-17";
+const START_WEIGHT = 93.2;
+const DAILY_DELTA = 0.07;
+const FLOOR_WEIGHT = 76.0;
+
+// ============ AKTIVITETER ============
+const ACTIVITIES = {
+  motion: [
+    { id: 'run',    name: 'Løb',            detail: '' },
+    { id: 'fit',    name: 'Fitness',        detail: '' },
+    { id: 'swim',   name: 'Svømning',       detail: '>500 m' },
+    { id: 'tennis', name: 'Tennis',         detail: '>1 time' },
+    { id: 'walk',   name: 'Gåtur',          detail: '+4 km' }
+  ],
+  food: [
+    { id: 'noCake',   name: 'Ingen kage og is',    detail: '' },
+    { id: 'noChips',  name: 'Ingen slik og chips', detail: '' },
+    { id: 'noPre11',  name: 'Ingen mad før 11',    detail: '' },
+    { id: 'noPost20', name: 'Ingen mad efter 20',  detail: '' }
+  ]
+};
+
+const ALL_ACTIVITY_IDS = [
+  ...ACTIVITIES.motion.map(a => a.id),
+  ...ACTIVITIES.food.map(a => a.id)
+];
+
+// ============ INIT FIREBASE ============
+let app, auth, db, currentUser;
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+} catch (e) {
+  console.error('Firebase init failed:', e);
+}
+
+// ============ HELPERS ============
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const toISO = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const daysBetween = (a, b) => Math.round((b - a) / 86400000);
+
+function formatDateDA(iso) {
+  const d = parseISO(iso);
+  return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
+}
+function formatDayDA(iso) {
+  const d = parseISO(iso);
+  const days = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+  return days[d.getDay()];
+}
+
+function targetForDate(iso) {
+  const start = parseISO(START_DATE);
+  const cur = parseISO(iso);
+  const days = daysBetween(start, cur);
+  if (days < 0) return START_WEIGHT;
+  const target = START_WEIGHT - days * DAILY_DELTA;
+  return Math.max(target, FLOOR_WEIGHT);
+}
+
+function scoreZone(score) {
+  if (score >= 4) return 'loss';
+  if (score === 3) return 'hold';
+  if (score >= 1) return 'gain';
+  return 'none';
+}
+
+function scoreVerdict(score) {
+  if (score >= 4) return 'Vægttab-zone';
+  if (score === 3) return 'Hold vægten';
+  if (score >= 1) return 'Risiko for at tage på';
+  return 'Ingen aktiviteter';
+}
+
+function showToast(text = 'Gemt', ms = 1500) {
+  $('toastText').textContent = text;
+  $('toast').classList.add('show');
+  setTimeout(() => $('toast').classList.remove('show'), ms);
+}
+
+// ============ APP STATE ============
+let currentDate = toISO(new Date());
+let currentEntry = null; // { weight, activities: {id: bool} }
+let allEntries = {};     // { iso: entry }
+let chartRange = 30;
+let saveTimeout = null;
+
+// ============ RENDER AKTIVITETER ============
+function renderActivityGrid(groupId, activities) {
+  const grid = $(groupId);
+  grid.innerHTML = '';
+  activities.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'activity-btn';
+    btn.dataset.id = a.id;
+    btn.innerHTML = `
+      <div class="activity-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="activity-text">
+        <div class="activity-name">${a.name}</div>
+        ${a.detail ? `<div class="activity-detail">${a.detail}</div>` : ''}
+      </div>
+    `;
+    btn.addEventListener('click', () => toggleActivity(a.id));
+    grid.appendChild(btn);
+  });
+}
+
+function toggleActivity(id) {
+  if (!currentEntry) currentEntry = { weight: null, activities: {} };
+  currentEntry.activities[id] = !currentEntry.activities[id];
+  renderEntryState();
+  queueSave();
+}
+
+// ============ RENDER STATE ============
+function renderEntryState() {
+  // Aktiviteter
+  document.querySelectorAll('.activity-btn').forEach(btn => {
+    const on = currentEntry?.activities?.[btn.dataset.id] === true;
+    btn.classList.toggle('checked', on);
+  });
+
+  // Score
+  const score = ALL_ACTIVITY_IDS.reduce(
+    (s, id) => s + (currentEntry?.activities?.[id] ? 1 : 0), 0
+  );
+  $('scoreNumber').textContent = score;
+  $('scoreVerdict').textContent = scoreVerdict(score);
+  $('scoreLabel').textContent = currentDate === toISO(new Date()) ? 'Score i dag' : 'Score';
+
+  const zone = scoreZone(score);
+  const disp = $('scoreDisplay');
+  disp.className = 'score-display zone-' + zone;
+
+  // Vægt
+  const w = currentEntry?.weight;
+  $('weightInput').value = (w != null) ? w : '';
+
+  // Mål
+  const target = targetForDate(currentDate);
+  $('targetValue').textContent = target.toFixed(1);
+
+  if (w != null) {
+    const diff = w - target;
+    const sign = diff > 0 ? '+' : '';
+    $('targetDiff').textContent = `${sign}${diff.toFixed(1)} kg`;
+    $('targetDiff').style.color = diff > 0 ? 'var(--zone-gain)' : 'var(--zone-loss)';
+  } else {
+    $('targetDiff').textContent = '\u00a0';
+  }
+}
+
+function renderDateHeader() {
+  $('heroDate').textContent = formatDateDA(currentDate);
+  $('heroDay').textContent = formatDayDA(currentDate);
+  const today = toISO(new Date());
+  $('nextDay').disabled = currentDate >= today;
+}
+
+// ============ VÆGT INPUT ============
+$('weightInput').addEventListener('input', (e) => {
+  const val = parseFloat(e.target.value);
+  if (!currentEntry) currentEntry = { weight: null, activities: {} };
+  currentEntry.weight = isNaN(val) ? null : val;
+  renderEntryState();
+  queueSave();
+});
+
+// ============ DATE NAV ============
+$('prevDay').addEventListener('click', () => {
+  const d = parseISO(currentDate); d.setDate(d.getDate()-1);
+  currentDate = toISO(d); loadEntry();
+});
+$('nextDay').addEventListener('click', () => {
+  const today = toISO(new Date());
+  if (currentDate >= today) return;
+  const d = parseISO(currentDate); d.setDate(d.getDate()+1);
+  currentDate = toISO(d); loadEntry();
+});
+$('todayBtn').addEventListener('click', () => {
+  currentDate = toISO(new Date()); loadEntry();
+});
+
+// ============ FIRESTORE ============
+async function loadAllEntries() {
+  if (!currentUser) return;
+  const col = collection(db, 'users', currentUser.uid, 'entries');
+  const q = query(col, orderBy('__name__'));
+  const snap = await getDocs(q);
+  allEntries = {};
+  snap.forEach(doc => { allEntries[doc.id] = doc.data(); });
+}
+
+async function loadEntry() {
+  renderDateHeader();
+  currentEntry = allEntries[currentDate] || { weight: null, activities: {} };
+  renderEntryState();
+  renderStats();
+  renderCharts();
+}
+
+function queueSave() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  $('savingBadge').classList.add('visible');
+  saveTimeout = setTimeout(() => saveEntry(), 500);
+}
+
+async function saveEntry() {
+  if (!currentUser || !currentEntry) return;
+  try {
+    const ref = doc(db, 'users', currentUser.uid, 'entries', currentDate);
+    const data = {
+      weight: currentEntry.weight ?? null,
+      activities: currentEntry.activities || {},
+      score: ALL_ACTIVITY_IDS.reduce((s,id)=> s + (currentEntry.activities?.[id]?1:0), 0),
+      updatedAt: new Date().toISOString()
+    };
+    await setDoc(ref, data);
+    allEntries[currentDate] = data;
+    $('savingBadge').classList.remove('visible');
+    renderStats();
+    renderCharts();
+  } catch (e) {
+    console.error('Save failed:', e);
+    showToast('Kunne ikke gemme', 2500);
+  }
+}
+
+// ============ STATS ============
+function renderStats() {
+  // 7-dages snit
+  const dates = Object.keys(allEntries).sort();
+  const withWeight = dates.filter(d => allEntries[d].weight != null);
+  const last7 = withWeight.slice(-7);
+  if (last7.length > 0) {
+    const avg = last7.reduce((s,d) => s + allEntries[d].weight, 0) / last7.length;
+    $('stat7').textContent = avg.toFixed(1);
+  } else {
+    $('stat7').textContent = '—';
+  }
+
+  // Streak — dage med score ≥4 i træk, bagfra
+  const scored = dates.filter(d => allEntries[d].score != null).sort();
+  let streak = 0;
+  for (let i = scored.length - 1; i >= 0; i--) {
+    if (allEntries[scored[i]].score >= 4) streak++;
+    else break;
+  }
+  $('statStreak').textContent = streak;
+
+  // Afvigelse i dag
+  const w = currentEntry?.weight;
+  if (w != null) {
+    const diff = w - targetForDate(currentDate);
+    const el = $('statDiff');
+    el.textContent = (diff > 0 ? '+' : '') + diff.toFixed(1);
+    el.className = 'stat-value ' + (diff > 0 ? 'neg' : 'pos');
+  } else {
+    $('statDiff').textContent = '—';
+    $('statDiff').className = 'stat-value';
+  }
+}
+
+// ============ CHART (canvas — ingen dependencies) ============
+function renderCharts() {
+  renderWeightChart();
+  renderScoreChart();
+}
+
+function getRangeDates() {
+  const dates = Object.keys(allEntries).sort();
+  if (chartRange === 'all' || dates.length === 0) return dates;
+  const n = parseInt(chartRange);
+  const today = new Date();
+  const start = new Date();
+  start.setDate(today.getDate() - n + 1);
+  const result = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    result.push(toISO(d));
+  }
+  return result;
+}
+
+function renderWeightChart() {
+  const canvas = $('weightChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const dates = getRangeDates();
+  if (dates.length === 0) { drawEmptyChart(ctx, w, h); return; }
+
+  // Data-serier
+  const weights = dates.map(d => allEntries[d]?.weight ?? null);
+  const targets = dates.map(d => targetForDate(d));
+
+  // Rullende 7-dages snit
+  const rolling = weights.map((_, i) => {
+    const slice = weights.slice(Math.max(0, i - 6), i + 1).filter(v => v != null);
+    if (slice.length < 2) return null;
+    return slice.reduce((s,v) => s+v, 0) / slice.length;
+  });
+
+  // Y-axis range
+  const allVals = [...weights.filter(v => v != null), ...targets, ...rolling.filter(v => v != null)];
+  if (allVals.length === 0) { drawEmptyChart(ctx, w, h); return; }
+  let yMin = Math.min(...allVals) - 0.5;
+  let yMax = Math.max(...allVals) + 0.5;
+  if (yMax - yMin < 3) { const c = (yMax+yMin)/2; yMin = c - 1.5; yMax = c + 1.5; }
+
+  // Padding
+  const pad = { l: 36, r: 12, t: 16, b: 24 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+
+  const xOf = i => pad.l + (dates.length <= 1 ? cw/2 : (i / (dates.length - 1)) * cw);
+  const yOf = v => pad.t + ch - ((v - yMin) / (yMax - yMin)) * ch;
+
+  // Grid + Y labels
+  ctx.strokeStyle = '#E8EFEA';
+  ctx.lineWidth = 1;
+  ctx.font = '600 10px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#8A9A93';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+
+  const yStep = (yMax - yMin) / 4;
+  for (let i = 0; i <= 4; i++) {
+    const v = yMin + i * yStep;
+    const y = yOf(v);
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y);
+    ctx.stroke();
+    ctx.fillText(v.toFixed(1), pad.l - 6, y);
+  }
+
+  // X labels — start, mid, end
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const labelIdx = dates.length <= 4 ? dates.map((_,i)=>i) : [0, Math.floor(dates.length/2), dates.length-1];
+  labelIdx.forEach(i => {
+    const d = parseISO(dates[i]);
+    const label = `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}`;
+    ctx.fillText(label, xOf(i), h - pad.b + 6);
+  });
+
+  // Mål-linje (stiplet)
+  ctx.strokeStyle = '#8A9A93';
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  targets.forEach((v, i) => {
+    if (i === 0) ctx.moveTo(xOf(i), yOf(v));
+    else ctx.lineTo(xOf(i), yOf(v));
+  });
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 7-dages snit
+  ctx.strokeStyle = '#4A7C59';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  let started = false;
+  rolling.forEach((v, i) => {
+    if (v == null) { started = false; return; }
+    if (!started) { ctx.moveTo(xOf(i), yOf(v)); started = true; }
+    else ctx.lineTo(xOf(i), yOf(v));
+  });
+  ctx.stroke();
+
+  // Faktisk vægt — punkter og linje
+  ctx.strokeStyle = '#0F3D2E';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  started = false;
+  weights.forEach((v, i) => {
+    if (v == null) { started = false; return; }
+    if (!started) { ctx.moveTo(xOf(i), yOf(v)); started = true; }
+    else ctx.lineTo(xOf(i), yOf(v));
+  });
+  ctx.stroke();
+
+  ctx.fillStyle = '#0F3D2E';
+  weights.forEach((v, i) => {
+    if (v != null) {
+      ctx.beginPath();
+      ctx.arc(xOf(i), yOf(v), 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function renderScoreChart() {
+  const canvas = $('scoreChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const dates = getRangeDates();
+  if (dates.length === 0) { drawEmptyChart(ctx, w, h); return; }
+
+  const scores = dates.map(d => allEntries[d]?.score ?? null);
+  const pad = { l: 24, r: 12, t: 16, b: 24 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+  const yMax = 9;
+
+  const barW = Math.max(2, (cw / dates.length) * 0.7);
+  const step = cw / dates.length;
+
+  // Baseline på 3 (hold-vægt)
+  const yOf3 = pad.t + ch - (3 / yMax) * ch;
+  ctx.strokeStyle = '#C89B2E';
+  ctx.setLineDash([3, 3]);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, yOf3);
+  ctx.lineTo(w - pad.r, yOf3);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Baseline på 4 (vægttab-tærskel)
+  const yOf4 = pad.t + ch - (4 / yMax) * ch;
+  ctx.strokeStyle = '#2E7D5B';
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, yOf4);
+  ctx.lineTo(w - pad.r, yOf4);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Bars
+  scores.forEach((s, i) => {
+    if (s == null) return;
+    const x = pad.l + i * step + (step - barW) / 2;
+    const barH = (s / yMax) * ch;
+    const y = pad.t + ch - barH;
+    if (s >= 4) ctx.fillStyle = '#2E7D5B';
+    else if (s === 3) ctx.fillStyle = '#C89B2E';
+    else if (s >= 1) ctx.fillStyle = '#B84A3E';
+    else ctx.fillStyle = '#D8E2DC';
+    const r = Math.min(barW / 2, 3);
+    roundRect(ctx, x, y, barW, Math.max(barH, 2), r);
+    ctx.fill();
+  });
+
+  // Y labels
+  ctx.font = '600 10px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#8A9A93';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  [0, 3, 4, 9].forEach(v => {
+    const y = pad.t + ch - (v / yMax) * ch;
+    ctx.fillText(String(v), pad.l - 4, y);
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h);
+  ctx.lineTo(x, y + h);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawEmptyChart(ctx, w, h) {
+  ctx.font = '600 12px Nunito, sans-serif';
+  ctx.fillStyle = '#8A9A93';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Ingen data endnu', w/2, h/2);
+}
+
+// Chart-tabs
+document.querySelectorAll('.chart-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    chartRange = tab.dataset.range === 'all' ? 'all' : parseInt(tab.dataset.range);
+    renderCharts();
+  });
+});
+
+window.addEventListener('resize', () => renderCharts());
+
+// ============ MENU ============
+$('menuBtn').addEventListener('click', () => $('menuModal').classList.add('open'));
+$('menuModal').addEventListener('click', (e) => {
+  if (e.target === $('menuModal')) $('menuModal').classList.remove('open');
+});
+
+$('exportBtn').addEventListener('click', () => {
+  const dates = Object.keys(allEntries).sort();
+  const headers = ['Dato','Vægt','Mål','Afvigelse','7dg snit', ...ALL_ACTIVITY_IDS, 'Score'];
+  const rows = [headers];
+
+  dates.forEach((d, idx) => {
+    const e = allEntries[d];
+    const target = targetForDate(d);
+    const diff = e.weight != null ? (e.weight - target).toFixed(2) : '';
+    // 7-dg snit
+    const window7 = dates.slice(Math.max(0, idx-6), idx+1)
+      .map(dd => allEntries[dd].weight).filter(v => v != null);
+    const avg = window7.length >= 2 ? (window7.reduce((s,v)=>s+v,0)/window7.length).toFixed(2) : '';
+    const acts = ALL_ACTIVITY_IDS.map(id => e.activities?.[id] ? 1 : 0);
+    rows.push([d, e.weight ?? '', target.toFixed(2), diff, avg, ...acts, e.score ?? 0]);
+  });
+
+  const csv = rows.map(r => r.map(c => {
+    const s = String(c);
+    return /[,";\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  }).join(';')).join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vaegt-${toISO(new Date())}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  $('menuModal').classList.remove('open');
+  showToast('CSV eksporteret');
+});
+
+$('signOutBtn').addEventListener('click', async () => {
+  await signOut(auth);
+  location.reload();
+});
+
+// ============ AUTH ============
+$('googleSignIn').addEventListener('click', async () => {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    console.error(e);
+    $('loginError').textContent = 'Kunne ikke logge på. Prøv igen.';
+    $('loginError').style.display = 'block';
+  }
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    if (user.email !== ALLOWED_EMAIL) {
+      await signOut(auth);
+      $('loginError').textContent = `Adgang kun for ${ALLOWED_EMAIL}`;
+      $('loginError').style.display = 'block';
+      return;
+    }
+    currentUser = user;
+    $('userName').textContent = user.displayName || 'Bruger';
+    $('userEmail').textContent = user.email;
+    $('loginScreen').style.display = 'none';
+    $('loadingScreen').style.display = 'flex';
+
+    renderActivityGrid('motionGrid', ACTIVITIES.motion);
+    renderActivityGrid('foodGrid', ACTIVITIES.food);
+
+    await loadAllEntries();
+    $('loadingScreen').style.display = 'none';
+    $('app').style.display = 'block';
+    await loadEntry();
+  } else {
+    $('loginScreen').style.display = 'flex';
+    $('app').style.display = 'none';
+  }
+});
+
+// Warn if Firebase not configured
+if (firebaseConfig.apiKey === 'REPLACE_WITH_YOUR_API_KEY') {
+  console.warn('⚠️ Firebase er ikke konfigureret endnu. Udskift firebaseConfig i index.html med dine egne værdier.');
+}
+</script>
+</body>
+</html>
