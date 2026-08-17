@@ -105,18 +105,18 @@ function computeScore(entry, iso) {
   return activityScore + weightPoint;
 }
 
-// Score-zoner nu skaleret til /10
-// ≥5 = vægttab, 4 = hold, ≤3 = tag på
+// Score-zoner (skala 0-10, hvor vægt≤mål giver +1 bonus):
+// ≥4 = vægttab, 3 = hold, ≤2 = tag på
 function scoreZone(score) {
-  if (score >= 5) return 'loss';
-  if (score === 4) return 'hold';
+  if (score >= 4) return 'loss';
+  if (score === 3) return 'hold';
   if (score >= 1) return 'gain';
   return 'none';
 }
 
 function scoreVerdict(score) {
-  if (score >= 5) return 'Vægttab-zone';
-  if (score === 4) return 'Hold vægten';
+  if (score >= 4) return 'Vægttab-zone';
+  if (score === 3) return 'Hold vægten';
   if (score >= 1) return 'Risiko for at tage på';
   return 'Ingen aktiviteter';
 }
@@ -339,11 +339,11 @@ function renderStats() {
     $('stat7').textContent = '—';
   }
 
-  // Streak — dage med score ≥5 i træk (bagfra)
+  // Streak — dage med score ≥4 i træk (bagfra)
   const scored = dates.filter(d => allEntries[d].score != null).sort();
   let streak = 0;
   for (let i = scored.length - 1; i >= 0; i--) {
-    if (allEntries[scored[i]].score >= 5) streak++;
+    if (allEntries[scored[i]].score >= 4) streak++;
     else break;
   }
   $('statStreak').textContent = streak;
@@ -516,24 +516,24 @@ function renderScoreChart() {
   const barW = Math.max(2, (cw / dates.length) * 0.7);
   const step = cw / dates.length;
 
-  // Baseline på 4 (hold-vægt)
-  const yOf4 = padC.t + ch - (4 / yMax) * ch;
+  // Baseline på 3 (hold-vægt)
+  const yOf3 = padC.t + ch - (3 / yMax) * ch;
   ctx.strokeStyle = '#C89B2E';
   ctx.setLineDash([3, 3]);
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(padC.l, yOf4);
-  ctx.lineTo(w - padC.r, yOf4);
+  ctx.moveTo(padC.l, yOf3);
+  ctx.lineTo(w - padC.r, yOf3);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Baseline på 5 (vægttab-tærskel)
-  const yOf5 = padC.t + ch - (5 / yMax) * ch;
+  // Baseline på 4 (vægttab-tærskel)
+  const yOf4 = padC.t + ch - (4 / yMax) * ch;
   ctx.strokeStyle = '#2E7D5B';
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
-  ctx.moveTo(padC.l, yOf5);
-  ctx.lineTo(w - padC.r, yOf5);
+  ctx.moveTo(padC.l, yOf4);
+  ctx.lineTo(w - padC.r, yOf4);
   ctx.stroke();
   ctx.setLineDash([]);
 
@@ -543,8 +543,8 @@ function renderScoreChart() {
     const x = padC.l + i * step + (step - barW) / 2;
     const barH = (s / yMax) * ch;
     const y = padC.t + ch - barH;
-    if (s >= 5) ctx.fillStyle = '#2E7D5B';
-    else if (s === 4) ctx.fillStyle = '#C89B2E';
+    if (s >= 4) ctx.fillStyle = '#2E7D5B';
+    else if (s === 3) ctx.fillStyle = '#C89B2E';
     else if (s >= 1) ctx.fillStyle = '#B84A3E';
     else ctx.fillStyle = '#D8E2DC';
     const r = Math.min(barW / 2, 3);
@@ -557,7 +557,7 @@ function renderScoreChart() {
   ctx.fillStyle = '#8A9A93';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
-  [0, 4, 5, 10].forEach(v => {
+  [0, 3, 4, 10].forEach(v => {
     const y = padC.t + ch - (v / yMax) * ch;
     ctx.fillText(String(v), padC.l - 4, y);
   });
