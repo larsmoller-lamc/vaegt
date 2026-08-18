@@ -575,6 +575,12 @@ body { font-size: 15px; line-height: 1.5; }
   width: 100%;
 }
 
+.chart-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .chart-legend {
   display: flex;
   gap: 16px;
