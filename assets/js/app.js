@@ -365,15 +365,17 @@ function renderStats() {
 // Hjælpefunktion: robust canvas-opsætning der virker i Safari/iOS
 function setupCanvas(canvas) {
   const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  // Safari kan returnere 0×0 hvis layout ikke er kørt endnu — fallback til clientWidth/Height
-  const w = rect.width || canvas.clientWidth || canvas.parentElement.clientWidth || 300;
-  const h = rect.height || canvas.clientHeight || 240;
-  canvas.width = Math.round(w * dpr);
-  canvas.height = Math.round(h * dpr);
+  // Brug parent-container's dimensioner — canvas'et er sat til width/height 100% via CSS
+  const parent = canvas.parentElement;
+  const w = parent.clientWidth || 300;
+  const h = parent.clientHeight || 240;
+  // Sæt kun hvis det har ændret sig — undgår at trigge unødig layout
+  const targetW = Math.round(w * dpr);
+  const targetH = Math.round(h * dpr);
+  if (canvas.width !== targetW) canvas.width = targetW;
+  if (canvas.height !== targetH) canvas.height = targetH;
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(1, 0, 0, 1, 0, 0); // reset
-  ctx.scale(dpr, dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // sæt scale direkte uden akkumulering
   return { ctx, w, h };
 }
 
@@ -600,12 +602,13 @@ document.querySelectorAll('.chart-tab').forEach(tab => {
   });
 });
 
-window.addEventListener('resize', () => renderCharts());
-window.addEventListener('orientationchange', () => setTimeout(renderCharts, 100));
-// Genrender når fonts er loadet — Safari kan tegne før fonts er klar
-if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(() => renderCharts());
+let resizeTimeout = null;
+function debouncedRender() {
+  if (resizeTimeout) clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => renderCharts(), 150);
 }
+window.addEventListener('resize', debouncedRender);
+window.addEventListener('orientationchange', debouncedRender);
 
 // ============ MENU ============
 $('menuBtn').addEventListener('click', () => $('menuModal').classList.add('open'));
