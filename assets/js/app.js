@@ -362,9 +362,27 @@ function renderStats() {
 }
 
 // ============ CHART (canvas — ingen dependencies) ============
+// Hjælpefunktion: robust canvas-opsætning der virker i Safari/iOS
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  // Safari kan returnere 0×0 hvis layout ikke er kørt endnu — fallback til clientWidth/Height
+  const w = rect.width || canvas.clientWidth || canvas.parentElement.clientWidth || 300;
+  const h = rect.height || canvas.clientHeight || 240;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // reset
+  ctx.scale(dpr, dpr);
+  return { ctx, w, h };
+}
+
 function renderCharts() {
-  renderWeightChart();
-  renderScoreChart();
+  // Kør på næste frame så layout er sikkert færdigt — kritisk for Safari
+  requestAnimationFrame(() => {
+    renderWeightChart();
+    renderScoreChart();
+  });
 }
 
 function getRangeDates() {
@@ -385,13 +403,7 @@ function getRangeDates() {
 
 function renderWeightChart() {
   const canvas = $('weightChart');
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-  const w = rect.width, h = rect.height;
+  const { ctx, w, h } = setupCanvas(canvas);
   ctx.clearRect(0, 0, w, h);
 
   const dates = getRangeDates();
@@ -416,6 +428,7 @@ function renderWeightChart() {
   const cw = w - padC.l - padC.r;
   const ch = h - padC.t - padC.b;
 
+  // Hvis kun ét datapunkt: centrér. Ellers spred over hele bredden.
   const xOf = i => padC.l + (dates.length <= 1 ? cw/2 : (i / (dates.length - 1)) * cw);
   const yOf = v => padC.t + ch - ((v - yMin) / (yMax - yMin)) * ch;
 
@@ -495,13 +508,7 @@ function renderWeightChart() {
 
 function renderScoreChart() {
   const canvas = $('scoreChart');
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-  const w = rect.width, h = rect.height;
+  const { ctx, w, h } = setupCanvas(canvas);
   ctx.clearRect(0, 0, w, h);
 
   const dates = getRangeDates();
@@ -594,6 +601,11 @@ document.querySelectorAll('.chart-tab').forEach(tab => {
 });
 
 window.addEventListener('resize', () => renderCharts());
+window.addEventListener('orientationchange', () => setTimeout(renderCharts, 100));
+// Genrender når fonts er loadet — Safari kan tegne før fonts er klar
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => renderCharts());
+}
 
 // ============ MENU ============
 $('menuBtn').addEventListener('click', () => $('menuModal').classList.add('open'));
@@ -674,6 +686,8 @@ onAuthStateChanged(auth, async (user) => {
     await loadAllEntries();
     $('loadingScreen').style.display = 'none';
     $('app').style.display = 'block';
+    // Vent to frames så Safari når at kalkulere layout før canvas-rendering
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     await loadEntry();
   } else {
     $('loginScreen').style.display = 'flex';
